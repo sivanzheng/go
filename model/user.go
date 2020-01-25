@@ -35,7 +35,7 @@ func UserLogin(num string) (User, error) {
 
 func UserPage(pi, ps int) ([]User, error) {
 	mods := make([]User, 0, ps)
-	err := DB.Select(&mods, "select * from user limit ?,?", (pi-1)*ps, ps)
+	err := DB.Select(&mods, "select * from user limit ?,?", pi*ps, ps)
 	return mods, err
 }
 
@@ -43,6 +43,12 @@ func UserCount() int {
 	count := 0
 	DB.Get(&count, "select count(id) as count from user")
 	return count
+}
+
+func UserGet(id int64) (*User, error) {
+	mod := &User{}
+	err := DB.Get(mod, "select * from user where id = ? limit 1", id)
+	return mod, err
 }
 
 func UserDelete(id int64) error {
@@ -56,6 +62,47 @@ func UserDelete(id int64) error {
 	if rows < 1 {
 		tx.Rollback()
 		return errors.New("rows affect < 1")
+	}
+	tx.Commit()
+	return nil
+}
+
+func UserAdd(mod *User) error {
+	tx, _ := DB.Begin()
+	result, err := tx.Exec("insert into user (num, `name`, pass, phone, email, ctime, `status`) values (?,?,?,?,?,?,?)", mod.Num, mod.Name, mod.Pass, mod.Phone, mod.Email, mod.Ctime, mod.Status)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	rows, _ := result.RowsAffected()
+	if rows < 1 {
+		tx.Rollback()
+		return errors.New("row affected < 1")
+	}
+	tx.Commit()
+	return nil
+}
+
+func UserExists(num string) bool {
+	mod := User{}
+	err := DB.Get(&mod, "select * from user where num = ?", num)
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+func UserEdit(mod *User) error {
+	tx, _ := DB.Beginx()
+	result, err := tx.NamedExec("update user set `name`=:name, `phone`=:phone, `email`=:email where `id`=:id", mod)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	rows, _ := result.RowsAffected()
+	if rows < 1 {
+		tx.Rollback()
+		return errors.New("row affected < 1")
 	}
 	tx.Commit()
 	return nil

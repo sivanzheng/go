@@ -16,6 +16,18 @@ type login struct {
 	Pass string
 }
 
+func UserGet(ctx echo.Context) error {
+	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		return ctx.JSON(common.ErrIpt("Invalid Input", err.Error()))
+	}
+	mod, err := model.UserGet(id)
+	if err != nil {
+		return ctx.JSON(common.ErrOpt("No Data", err.Error()))
+	}
+	return ctx.JSON(common.Succ("User Data", mod))
+}
+
 func UserLogin(ctx echo.Context) error {
 	ipt := login{}
 	err := ctx.Bind(&ipt)
@@ -63,9 +75,6 @@ func UserPage(ctx echo.Context) error {
 	if ipt.Ps < 1 || ipt.Ps > 50 {
 		ipt.Ps = 10
 	}
-	if ipt.Pi < 1 {
-		return ctx.JSON(common.ErrOpt("Error Input"))
-	}
 	count := model.UserCount()
 	mods, err := model.UserPage(ipt.Pi, ipt.Ps)
 	if err != nil {
@@ -89,4 +98,49 @@ func UserDelete(ctx echo.Context) error {
 	}
 	return ctx.JSON(common.Succ("Delete Success"))
 
+}
+
+func UserAdd(ctx echo.Context) error {
+	ipt := model.User{}
+	err := ctx.Bind(&ipt)
+	if err != nil {
+		return ctx.JSON(common.ErrIpt("Error Input", err.Error()))
+	}
+	if ipt.Name == "" {
+		return ctx.JSON(common.ErrIpt("Name Can Not Be Empty"))
+	}
+	if ipt.Pass == "" {
+		return ctx.JSON(common.ErrIpt("Pass Can Not Be Empty"))
+	}
+	if ipt.Num == "" {
+		return ctx.JSON(common.ErrIpt("Num Can Not Be Empty"))
+	}
+	if model.UserExists(ipt.Name) {
+		return ctx.JSON(common.ErrIpt("Name Exists"))
+	}
+	ipt.Ctime = time.Now()
+	err = model.UserAdd(&ipt)
+	if err != nil {
+		return ctx.JSON(common.Fail("Add Fail", err.Error()))
+	}
+	return ctx.JSON(common.Succ("Add Success"))
+}
+
+func UserEdit(ctx echo.Context) error {
+	ipt := model.User{}
+	err := ctx.Bind(&ipt)
+	if err != nil {
+		return ctx.JSON(common.ErrIpt("Error Input", err.Error()))
+	}
+	if ipt.Name == "" {
+		return ctx.JSON(common.ErrIpt("Error Name", err.Error()))
+	}
+	if ipt.Email == "" {
+		return ctx.JSON(common.ErrIpt("Error Email", err.Error()))
+	}
+	err = model.UserEdit(&ipt)
+	if err != nil {
+		return ctx.JSON(common.Fail("Edit Failed", err.Error()))
+	}
+	return ctx.JSON(common.Succ("Edit Success"))
 }
