@@ -16,5 +16,8 @@ func Run() {
 	user := app.Group("/user", ServerHeader) // 限制token
 	UserRouter(user)
 
+	article := app.Group("/article")
+	ArticleRouter(article)
+
 	app.Start(":9999")
 }

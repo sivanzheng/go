@@ -104,7 +104,7 @@ func UserAdd(ctx echo.Context) error {
 	ipt := model.User{}
 	err := ctx.Bind(&ipt)
 	if err != nil {
-		return ctx.JSON(common.ErrIpt("Error Input", err.Error()))
+		return ctx.JSON(common.ErrIpt("Invaild Data", err.Error()))
 	}
 	if ipt.Name == "" {
 		return ctx.JSON(common.ErrIpt("Name Can Not Be Empty"))
