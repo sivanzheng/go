@@ -1,6 +1,9 @@
 package model
 
-import "errors"
+import (
+	"errors"
+	"github.com/jmoiron/sqlx"
+)
 
 type Class struct {
 	Id   int64  `json:"id"`
@@ -90,4 +93,24 @@ func ClassDelete(id int64) error {
 	}
 	tx.Commit()
 	return nil
+}
+
+func ClassNameById(id int64) string {
+	println(id)
+	name := ""
+	DB.Get(&name, "select name from class where id = ?", id)
+	return name
+}
+
+func ClassNameByIds(ids []int64) map[int64]string {
+	query, args, _ := sqlx.In("select * from class where id in (?)", ids)
+	query = DB.Rebind(query)
+	mods := make([]Class, 0, len(ids))
+	DB.Select(&mods, query, args...)
+	classNames := make(map[int64]string)
+	for i := 0; i < len(mods); i++ {
+		classNames[mods[i].Id] = mods[i].Name
+	}
+	println(&classNames)
+	return classNames
 }
